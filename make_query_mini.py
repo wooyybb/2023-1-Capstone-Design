@@ -50,7 +50,6 @@ def make_df(data):
 def make_query_ML_classificaiton(data_path, selected_model,  label_col, class_cnt, nan_check_flag, useless_features, numeric_col, categorical_col,
 	scaler_flag, class_imbalance_flag):
 	Query = f'Please make machine learning classification {selected_model} model using python.\nPlease generate the code in the order described below and set all SEED values (and random_state parameters) to 42.\n'
-
 	Query += f'This is data information. The label to be predicted is {label_col}, and the label consists of {class_cnt} types.\n'
 
 	Query += f'Data path is {data_path}. Please load this data using pandas\n' #Data load
@@ -69,6 +68,17 @@ def make_query_ML_classificaiton(data_path, selected_model,  label_col, class_cn
 
 	if class_imbalance_flag is not False:
 		Query += 'Since there is a current class imbalance problem, use imblearn SMOTE library to oversample only the training data.\n'
+
+	if selected_model == "RandomForest":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_rf} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "ExtraTree":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_ex} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "XGBoost":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_xgb} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "LightGBM":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_lgbm} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+
+	Query += 'Set the evaluation metric inside the objective function to f1-score.\n'
 	return Query
 
 def make_query_ML_regression(data_path, selected_model, label_col, regression_cnt, nan_check_flag, useless_features, numeric_col, categorical_col, scaler_flag):
@@ -89,18 +99,29 @@ def make_query_ML_regression(data_path, selected_model, label_col, regression_cn
 	if scaler_flag is not None:
 		Query += 'Scale data using scikit-learn MinMaxScaler.'
 
+	if selected_model == "RandomForest":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_rf} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "ExtraTree":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_ex} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "XGBoost":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_xgb} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+	elif selected_model == "LightGBM":
+		Query += f'Please optimize hyperparameters using optuna library, and refer to this dictionary {param_lgbm} and write the objective function of optuna. Do not use pruner and use the TPESampler.\n'
+
+	Query += 'Set the evaluation metric inside the objective function to Mean Square Error.\n'
+	return Query
 
 param_lgbm = {
-		'reg_lambda': 'trial.suggest_float("reg_lambda", 1e-5, 1.0)',
-		'reg_alpha': 'trial.suggest_float("reg_alpha", 1e-5, 1.0)',
-		'max_depth': 'trial.suggest_int("max_depth", 4,100)',
-		'colsample_bytree': 'trial.suggest_float("colsample_bytree", 0.1, 1)',
-		'subsample': 'trial.suggest_loguniform("subsample", 0.5, 1)',
-		'learning_rate': 'trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)',
-		'n_estimators': 'trial.suggest_int("n_estimators", 100, 3000)',
-		'min_child_samples': 'trial.suggest_int("min_child_samples", 5, 100)',
-		'random_state' : 42
-		}
+	'reg_lambda': 'trial.suggest_float("reg_lambda", 1e-5, 1.0)',
+	'reg_alpha': 'trial.suggest_float("reg_alpha", 1e-5, 1.0)',
+	'max_depth': 'trial.suggest_int("max_depth", 4,100)',
+	'colsample_bytree': 'trial.suggest_float("colsample_bytree", 0.1, 1)',
+	'subsample': 'trial.suggest_loguniform("subsample", 0.5, 1)',
+	'learning_rate': 'trial.suggest_loguniform("learning_rate", 1e-5, 1e-1)',
+	'n_estimators': 'trial.suggest_int("n_estimators", 100, 3000)',
+	'min_child_samples': 'trial.suggest_int("min_child_samples", 5, 100)',
+	'random_state' : 42
+	}
 param_xgb = {
         'reg_lambda': 'trial.suggest_float("reg_lambda", 1e-5, 1.0)',
         'reg_alpha': 'trial.suggest_float("reg_alpha", 1e-5, 1.0)',
@@ -111,7 +132,7 @@ param_xgb = {
         'n_estimators': 'trial.suggest_int("n_estimators", 100, 3000)',
         'min_child_weight': 'trial.suggest_int("min_child_weight", 1, 50)',
         'gpu_id': -1,  # CPU 사용시
-		'random_state' : 42
+	'random_state' : 42
 	}
 param_ex = {
         'max_depth': 'trial.suggest_int("max_depth", 10, 100)',
@@ -180,9 +201,12 @@ if __name__ == '__main__':
 		df.drop(label_col, axis=1, inplace=True)
 		numeric_col, categorical_col = column_type_check(df)
 		for model in selected_model:
+			if model == 'LightGBM':
+				param_lgbm['num_class'] = class_cnt
+			elif model == 'XGBoost':
+				param_ex['num_class'] = class_cnt
 			Query = make_query_ML_classificaiton(data_path, model, label_col, class_cnt, nan_check_flag, useless_features, numeric_col, categorical_col, scaler_flag, class_imbalance_flag)
 			print(Query)
-
 	else: #Regression
 		data_path = None
 		nan_check_flag = None
