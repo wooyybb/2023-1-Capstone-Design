@@ -1,16 +1,15 @@
-import os
 import sys
+import requests
+import openai
+import os
 import pandas as pd
 import numpy as np
-import requests
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QTextEdit, QComboBox, QHBoxLayout, QVBoxLayout, QFileDialog
 import utils
-
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QTextEdit, QComboBox, QHBoxLayout, QVBoxLayout, QFileDialog
 
 class ChatGPT_GUI(QWidget):
     def __init__(self):
         super().__init__()
-
 
         self.prob_type = None #'Classification' or 'Regression'
         self.query_list = None
@@ -25,7 +24,7 @@ class ChatGPT_GUI(QWidget):
         # Create labels for input fields
         csv_path_label = QLabel('Path of CSV file:')
         model_type_label = QLabel('Model type (Classification/Regression):')
-        target_cols_label = QLabel('Target columns:')
+        target_cols_label = QLabel('Target columns (separated by //):')
         useless_cols_label = QLabel('Useless-feature columns (separated by //):')
 
         # Create input fields
@@ -73,7 +72,7 @@ class ChatGPT_GUI(QWidget):
         # Set main layout
         self.setLayout(main_layout)
 
-        # Set window properties -- 1, 2는 생성위치 3, 4는 창 크기
+        # Set window properties - 1, 2는 생성위치 3, 4는 창 크기
         self.setWindowTitle('A.C.G.C')
         self.setGeometry(1000, 500, 1000, 900)
     
@@ -93,31 +92,41 @@ class ChatGPT_GUI(QWidget):
             f.write(f"Target Columns: {', '.join(target_cols)}\n")
             f.write(f"Useless-Feature Columns: {', '.join(useless_cols)}\n")
             
+            
     def send_request(self):
         # Get input values
-        self.csv_path = self.csv_path_btn.text() 
-        self.model_type = self.model_type_combo.currentText()
-        self.target_cols = self.target_cols_edit.toPlainText()
-        self.useless_cols = self.useless_cols_edit.toPlainText().split('//')
-
+        csv_path = self.csv_path_btn.text() 
+        model_type = self.model_type_combo.currentText()
+        target_cols = self.target_cols_edit.toPlainText().split('//')
+        useless_cols = self.useless_cols_edit.toPlainText().split('//')
 
         # Save input values to file
-        self.save_input_values(self.csv_path, self.model_type, self.target_cols, self.useless_cols)
+        self.save_input_values(csv_path, model_type, target_cols, useless_cols)
 
-        print(self.target_cols)
-        if self.model_type == "Classification":
-            self.query_list = self.util.classification_process(self.csv_path, self.useless_cols, self.target_cols)
+        openai.api_key = "<api key>"
 
-        elif self.model_type == "Regression":
-            self.query_list = self.util.regression_process(self.csv_path, self.useless_cols, self.target_cols)
+        if model_type == "Classification":
+            query_list = self.util.classification_process(csv_path, useless_cols, target_cols)
 
+        elif model_type == "Regression":
+            query_list = self.util.regression_process(csv_path, useless_cols, target_cols)
 
-        # Make request to Chat-GPT API
-        #response = requests.post('https://chat-gpt-api.com', data={'csv_path': self.csv_path, 'model_type': self.model_type, 'target_cols': self.target_cols, 'useless_cols': self.useless_cols})
+        # Set user_content with the content from query_list
+        user_content = query_list[0]
+
+        messages = []
+        messages.append({"role": "user", "content": f"{user_content}"})
+        completion = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=messages)
+
+        assistant_content = completion.choices[0].message["content"].strip()
+        messages.append({"role": "assistant", "content": f"{assistant_content}"})
+
+        print(f"GPT: {assistant_content}")
+    
 
         # Update output field with response text
-        # 각 쿼리 리스트에 모델별 쿼리가 담겨있음 현재 4가지 모델 사용
-        self.output_field.setText(self.query_list[0])
+        self.output_field.setText(assistant_content)
+
 
     
 if __name__ == '__main__':
