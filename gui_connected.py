@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import utils
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QTextEdit, QComboBox, QHBoxLayout, QVBoxLayout, QFileDialog
+from PyQt5.QtGui import QPalette, QColor, QIcon
 
 class ChatGPT_GUI(QWidget):
     def __init__(self):
@@ -19,6 +20,9 @@ class ChatGPT_GUI(QWidget):
         self.util = utils.utils()
 
         self.initUI()
+
+        # dark mode
+        self.dark_mode()
 
     def initUI(self):
         # Create labels for input fields
@@ -73,8 +77,46 @@ class ChatGPT_GUI(QWidget):
         self.setLayout(main_layout)
 
         # Set window properties - 1, 2는 생성위치 3, 4는 창 크기
+        self.setWindowIcon(QIcon(".\ico.ico"))
         self.setWindowTitle('A.C.G.C')
-        self.setGeometry(1000, 500, 1000, 900)
+        self.setGeometry(500, 150, 2000, 1500)
+
+    
+    def dark_mode(self):
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
+        palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ToolTipBase, QColor(255, 255, 255))
+        palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
+        palette.setColor(QPalette.Text, QColor(255, 255, 255))
+        palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
+        palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
+        palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.HighlightedText, QColor(255, 255, 255))
+        QApplication.setPalette(palette)
+        self.setPalette(palette)
+
+        # Set the style for QFileDialog, QComboBox, and QPushButton
+        style = """
+        QFileDialog, QComboBox, QPushButton {
+            background-color: #353535;
+            color: #ffffff;
+            border: 2px solid #76797C;
+            padding: 5px;
+        }
+
+        QFileDialog:hover, QComboBox:hover, QPushButton:hover {
+            border: 2px solid #3daee9;
+        }
+
+        QFileDialog:selected, QComboBox:selected, QPushButton:selected {
+            background-color: #3daee9;
+        }
+        """
+        self.setStyleSheet(style)
     
     def select_csv_file(self):
         options = QFileDialog.Options()
