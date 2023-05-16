@@ -77,7 +77,7 @@ class ChatGPT_GUI(QWidget):
         self.setLayout(main_layout)
 
         # Set window properties - 1, 2는 생성위치 3, 4는 창 크기
-        self.setWindowIcon(QIcon(".\ico.ico"))
+        self.setWindowIcon(QIcon("icon.png"))
         self.setWindowTitle('A.C.G.C')
         self.setGeometry(500, 150, 2000, 1500)
 
